@@ -62,7 +62,7 @@ abstract class BusHandler implements ShouldQueue
         }
     }
 
-    protected function failed(\Throwable $ex): void
+    public function failed(\Throwable $ex): void
     {
         $this->isActive = false;
         Bus::logFailed($this->busObject, $ex);
