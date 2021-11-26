@@ -1,0 +1,36 @@
+<?php
+
+namespace {{ handlerNamespace }};
+
+use Alangiacomin\LaravelCqrs\EventHandlers\EventHandler;
+use {{ eventNamespace }}\{{ event }};
+
+class {{ event }}Handler extends EventHandler
+{
+    /**
+     * The event
+     *
+     * @var {{ event }}
+     */
+    public {{ event }} $event;
+
+    /**
+     * Constructor
+     *
+     * @return void
+     */
+    public function __construct({{ event }} $event)
+    {
+        //
+    }
+
+    /**
+     * Execute the event
+     *
+     * @return void
+     */
+    public function execute(): void
+    {
+        //
+    }
+}

@@ -1,0 +1,20 @@
+{
+    "folders": [
+        {
+            "path": "."
+        }
+    ],
+    "settings": {
+        "eslint.validate": ["javascript", "javascriptreact", "html", "typescriptreact"],
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.fixAll.eslint": true,
+            "source.organizeImports": true
+        },
+        "editor.rulers": [80, 120],
+        "javascript.updateImportsOnFileMove.enabled": "prompt",
+        "emmet.showExpandedAbbreviation": "inMarkupAndStylesheetFilesOnly",
+        "workbench.panel.defaultLocation": "right",
+        "eslint.run": "onSave"
+    }
+}

@@ -1,0 +1,26 @@
+<?php
+
+namespace {{ handlerNamespace }};
+
+use Alangiacomin\LaravelCqrs\CommandHandlers\CommandHandler;
+use {{ commandNamespace }}\{{ command }};
+
+class {{ command }}Handler extends CommandHandler
+{
+    /**
+     * The command
+     *
+     * @return  void
+     */
+    public {{ command }} $command;
+
+    /**
+     * Execute the command
+     *
+     * @return  void
+     */
+    public function execute(): void
+    {
+        //
+    }
+}

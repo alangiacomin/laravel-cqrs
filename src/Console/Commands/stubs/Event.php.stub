@@ -1,0 +1,15 @@
+<?php
+
+namespace {{ namespace }};
+
+use Alangiacomin\LaravelCqrs\Events\Event;
+
+class {{ name }} extends Event
+{
+    /**
+     * Property description
+     *
+     * @var string
+     */
+    public string $prop;
+}

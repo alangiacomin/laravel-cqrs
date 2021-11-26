@@ -1,0 +1,15 @@
+<?php
+
+namespace {{ namespace }};
+
+use Alangiacomin\LaravelCqrs\Commands\Command;
+
+class {{ name }} extends Command
+{
+    /**
+     * Property description
+     *
+     * @var string
+     */
+    public string $prop;
+}
