@@ -11,6 +11,8 @@ abstract class BusObject
 
     public string $correlationId;
 
+    public $connection;
+
     public function __construct($props = null)
     {
         $this->id = "";
