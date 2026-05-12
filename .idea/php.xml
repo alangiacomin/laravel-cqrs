@@ -3,7 +3,6 @@
   <component name="LaravelPint">
     <laravel_pint_settings>
       <LaravelPintConfiguration tool_path="$PROJECT_DIR$/vendor/bin/pint" />
-      <LaravelPintConfiguration asDefaultInterpreter="true" tool_path="$PROJECT_DIR$/vendor/bin/pint" />
     </laravel_pint_settings>
   </component>
   <component name="MessDetectorOptionsConfiguration">
@@ -161,7 +160,6 @@
       <path value="$PROJECT_DIR$/vendor/spatie/laravel-data" />
       <path value="$PROJECT_DIR$/vendor/spatie/php-structure-discoverer" />
       <path value="$PROJECT_DIR$/vendor/spatie/laravel-package-tools" />
-      <path value="$PROJECT_DIR$/vendor/phpdocumentor/reflection" />
       <path value="$PROJECT_DIR$/vendor/spatie/typescript-transformer" />
       <path value="$PROJECT_DIR$/vendor/spatie/laravel-typescript-transformer" />
       <path value="$PROJECT_DIR$/vendor/inertiajs/inertia-laravel" />
