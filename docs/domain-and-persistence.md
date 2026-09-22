@@ -1,8 +1,8 @@
-# Dominio e persistenza
+# Dominio, letture e persistenza
 
-Il pacchetto segue un approccio pragmatico a CQRS e Laravel: Eloquent è il modello di persistenza, mentre command/action e query organizzano il comportamento applicativo.
+Il package segue un approccio pragmatico a CQRS e Laravel: Eloquent resta il modello di persistenza, mentre command/action e query aiutano a organizzare il comportamento applicativo.
 
-## Pragmatic DDD: aree senza burocracia
+## Organizzare il codice senza burocrazia
 
 Le `Areas` sono un modo per organizzare funzionalità e responsabilità, non una giustificazione per introdurre layer duplicati o controller di persistenza fittizi.
 
@@ -43,7 +43,7 @@ final class CreateProductCommand extends Command
 }
 ```
 
-Non è necessario introdurre un repository o un mapper tra il command e il modello. Se una regola appartiene al dominio, può essere espressa con un metodo del modello, una `Action` dedicata o un servizio applicativo semplice.
+Non è necessario introdurre un repository o un mapper tra il command e il modello. Se una regola appartiene al dominio, può essere espressa con un metodo del modello, una `Action` dedicata o un servizio applicativo semplice. Questa struttura è una scelta dell'applicazione, non un requisito del package.
 
 ## Lettura: Eloquent e Query Builder
 

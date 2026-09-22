@@ -1,10 +1,10 @@
-# Configurazione e discovery
+# Configurazione e integrazione
 
-Il service provider di `laravel-cqrs` registra la configurazione del trasformatore TypeScript e il comando `about` del pacchetto. Non esegue scansioni custom del progetto, non registra repository e non associa automaticamente listener tramite reflection.
+Il service provider di `laravel-cqrs` rende disponibile la configurazione del trasformatore TypeScript e aggiunge la versione del package al comando `php artisan about`. Non esegue scansioni custom del progetto e non registra automaticamente repository, listener o binding applicativi.
 
-## Eventi e listener
+## Eventi, listener e binding
 
-La registrazione degli eventi deve usare i meccanismi nativi di Laravel. In una nuova applicazione Laravel è possibile configurare le directory da scoprire nel bootstrap dell'applicazione:
+La registrazione degli eventi e dei listener deve usare i meccanismi nativi di Laravel. In una nuova applicazione Laravel è possibile configurare le directory da scoprire nel bootstrap dell'applicazione:
 
 ```php
 ->withEvents(discover: [
@@ -32,6 +32,4 @@ La discovery nativa è responsabilità dell'applicazione Laravel. Questo evita g
 
 Il package fonde la propria configurazione in `typescript-transformer`, includendo automaticamente `app_path()` tra i percorsi da scoprire. La configurazione dell'app può sovrascrivere i valori pubblicati secondo le regole di Laravel.
 
-## Nessuna configurazione Repository
-
-Non esistono più le chiavi `architecture.repositories`, `CQRS_DISCOVER_REPOSITORIES` o `CQRS_CACHE_REPOSITORY_BINDINGS`. La persistenza usa direttamente Eloquent e gli eventuali binding applicativi devono essere registrati esplicitamente nel service provider dell'applicazione.
+I binding applicativi, se necessari, devono essere registrati esplicitamente nel service provider dell'applicazione. La persistenza può usare direttamente Eloquent senza una configurazione repository del package.

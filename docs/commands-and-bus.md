@@ -1,21 +1,17 @@
-# Comandi e Message Bus
+# Comandi, dispatch e code
 
-Il pacchetto fornisce un'astrazione pulita e allineata a Laravel per eseguire le operazioni di business tramite comandi, orchestrati da un unico `MessageBus`.
+Il package fornisce una classe base `Command` per racchiudere un'operazione applicativa. L'esecuzione usa il bus nativo di Laravel: non sono richiesti un bus aggiuntivo o binding speciali.
 
----
+## Creare un comando
 
-## Definizione di un Comando
-
-Tutti i comandi estendono la classe astratta [`AlanGiacomin\LaravelCqrs\App\Application\Commands\Command`](file:///home/alan/Git/laravel-cqrs/src/App/Application/Commands/Command.php).
-
-A differenza dei pattern rigidi a due fasi, **il risultato del comando è semplicemente il valore restituito dal metodo `handle()`**:
+Estendi `AlanGiacomin\LaravelCqrs\App\Application\Commands\Command` e inserisci nel metodo `handle()` l'operazione che vuoi rendere riutilizzabile:
 
 ```php
 namespace App\Areas\Catalog\Application\Commands;
 
 use AlanGiacomin\LaravelCqrs\App\Application\Commands\Command;
 
-class CreateProductCommand extends Command
+final class CreateProductCommand extends Command
 {
     public function __construct(
         public readonly string $name,
@@ -24,17 +20,35 @@ class CreateProductCommand extends Command
 
     public function handle(): string
     {
-        // Logica di creazione del prodotto...
+        // Validazione di dominio e persistenza del prodotto...
         return 'prod_123';
     }
 }
 ```
 
----
+Il valore restituito da `handle()` è il risultato dell'esecuzione sincrona. Il comando può usare normalmente Eloquent, servizi applicativi ed eventi Laravel.
 
-## Comandi Asincroni e Code (`ShouldQueue`)
+## Eseguire un comando
 
-Se un comando deve essere elaborato in background sulle code di Laravel, basta implementare l'interfaccia standard `ShouldQueue` (oppure estendere [`AsyncCommand`](file:///home/alan/Git/laravel-cqrs/src/App/Application/Commands/AsyncCommand.php)):
+Usa `dispatch_sync()` quando la richiesta ha bisogno del risultato:
+
+```php
+$productId = dispatch_sync(
+    new CreateProductCommand('Scarpe', 49.99)
+);
+```
+
+Usa `dispatch()` quando il comando può essere consegnato al bus di Laravel:
+
+```php
+dispatch(new CreateProductCommand('Scarpe', 49.99));
+```
+
+Per un comando non accodato, Laravel lo esegue normalmente nel processo corrente. Per un comando che implementa `ShouldQueue`, `dispatch()` lo invia alla coda configurata, mentre `dispatch_sync()` lo esegue subito anche se è queueable.
+
+## Esecuzione in background
+
+Implementa `Illuminate\Contracts\Queue\ShouldQueue` per eseguire il comando con un worker:
 
 ```php
 namespace App\Areas\Reports\Application\Commands;
@@ -42,7 +56,7 @@ namespace App\Areas\Reports\Application\Commands;
 use AlanGiacomin\LaravelCqrs\App\Application\Commands\Command;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
-class GenerateMonthlyReportCommand extends Command implements ShouldQueue
+final class GenerateMonthlyReportCommand extends Command implements ShouldQueue
 {
     public function __construct(
         public readonly int $year,
@@ -51,92 +65,30 @@ class GenerateMonthlyReportCommand extends Command implements ShouldQueue
 
     public function handle(): void
     {
-        // Generazione del report in background
+        // Generazione del report.
     }
 }
 ```
 
----
+La configurazione della connessione, della coda e dei worker resta quella standard di Laravel:
 
-## Gestione Eventi e Rilevamento Asincrono
+```bash
+php artisan queue:work
+```
 
-Un'esigenza comune è distinguere tra:
-1. **Domain Events (Fatti di business):** devono essere sempre emessi (es. `OrderCreated`), sia in esecuzione sincrona sia asincrona.
-2. **Notification / Completion Events:** notifiche (es. via WebSocket o broadcast per Inertia/SPA) che devono essere emesse **solo se il comando viene eseguito in background**, evitando eventi superflui o doppi quando il comando è sincrono e l'utente riceve già il valore di ritorno nella risposta HTTP.
+## Eventi solo per i comandi asincroni
 
-La classe base `Command` mette a disposizione helper dedicati:
-
-- **`$this->isRunningOnQueue(): bool`**: ritorna `true` se il comando sta girando in un worker asincrono, `false` se è eseguito in sincrono nella richiesta HTTP. Utile per qualsiasi blocco condizionale `if ($this->isRunningOnQueue()) { ... }`.
-- **`$this->emitIfAsync(object|string $event, ...$payload): void`**: scorciatoia espressiva che lancia l'evento **solo** se il comando è in esecuzione su coda in background.
+`isRunningOnQueue()` restituisce `true` quando il comando è eseguito da un worker. `emitIfAsync()` invia un evento solo in quel caso:
 
 ```php
-namespace App\Areas\Orders\Application\Commands;
-
-use AlanGiacomin\LaravelCqrs\App\Application\Commands\Command;
-use Illuminate\Contracts\Queue\ShouldQueue;
-
-class ProcessOrderCommand extends Command implements ShouldQueue
+public function handle(): void
 {
-    public function __construct(public readonly string $orderId) {}
+    // Un evento di dominio può essere sempre emesso.
+    event(new ReportGenerated($this->year, $this->month));
 
-    public function handle(): string
-    {
-        // 1. Business logic
-        $status = 'processed';
-
-        // 2. Domain event: lanciato SEMPRE
-        event(new OrderStatusChanged($this->orderId, $status));
-
-        // 3. Completion event: lanciato SOLO se siamo asincroni in coda
-        $this->emitIfAsync(new OrderProcessingCompletedNotification($this->orderId));
-
-        return $status;
-    }
+    // Una notifica di completamento può essere limitata al lavoro in coda.
+    $this->emitIfAsync(new ReportGenerationCompleted($this->year, $this->month));
 }
 ```
 
----
-
-## Utilizzo del `MessageBus`
-
-La classe [`MessageBus`](file:///home/alan/Git/laravel-cqrs/src/Infrastructure/Bus/MessageBus.php) unifica l'invio dei comandi:
-
-### 1. `dispatch(Command $command): mixed`
-- Se il comando implementa `ShouldQueue`, viene accodato in background (`Bus::dispatch`) e restituisce `null`.
-- Altrimenti, viene eseguito immediatamente in sincrono e restituisce il valore di `handle()`.
-
-### 2. `dispatchSync(Command $command): mixed`
-- Esegue il comando **immediatamente nel processo corrente**, anche se implementa `ShouldQueue`, e ne restituisce il valore di ritorno.
-
-### 3. `dispatchAsync(Command $command): mixed`
-- Accoda esplicitamente il comando sulla coda di Laravel e restituisce `null`.
-
-```php
-use AlanGiacomin\LaravelCqrs\Infrastructure\Bus\MessageBus;
-
-// Esecuzione manuale:
-$result = app(MessageBus::class)->dispatch(new CreateProductCommand('Scarpe', 49.99));
-
-// Forzare esecuzione sincrona e ottenere il valore:
-$result = app(MessageBus::class)->dispatchSync(new ProcessOrderCommand('ord_123'));
-```
-
----
-
-## Esecuzione da Controller
-
-Se il tuo controller estende [`AlanGiacomin\LaravelCqrs\App\Presentation\Http\Controllers\Controller`](file:///home/alan/Git/laravel-cqrs/src/App/Presentation/Http/Controllers/Controller.php):
-
-```php
-// Esecuzione sincrona con valore di ritorno:
-$result = $this->execute(new CreateProductCommand($request->name, $request->price));
-
-// Esecuzione asincrona in background:
-$this->executeAsync(new GenerateMonthlyReportCommand(2026, 9));
-```
-
----
-
-## Retrocompatibilità (`SyncCommand`)
-
-La classe astratta `SyncCommand` e il metodo `getResponse()` sono mantenuti per piena retrocompatibilità con il codice legacy. Se `handle()` ritorna `null`, il `MessageBus` interroga automaticamente `getResponse()`. Nei nuovi comandi è sufficiente estendere `Command` e restituire il valore direttamente da `handle()`.
+Usa `event()` per i fatti di business che devono essere pubblicati in ogni modalità di esecuzione; usa `emitIfAsync()` solo quando l'evento ha senso per un'operazione in background.

@@ -1,6 +1,6 @@
 # Laravel CQRS
 
-Pacchetto per strutturare applicazioni Laravel secondo il pattern **CQRS** (Command Query Responsibility Segregation), con supporto nativo per **Inertia.js** e generazione automatica di tipi **TypeScript**.
+Un piccolo set di convenzioni e componenti per organizzare applicazioni Laravel secondo un approccio CQRS pragmatico, mantenendo il codice vicino alle convenzioni del framework. Il pacchetto è pensato per applicazioni che usano Laravel, Inertia.js e tipi TypeScript condivisi tra backend e frontend.
 
 ---
 
@@ -13,6 +13,18 @@ Se cerchi un'applicazione completa, preconfigurata e immediatamente funzionante 
 Tutti i dettagli di avvio rapido e configurazione dello stack completo (backend e frontend) sono disponibili nella documentazione del template.
 
 ---
+
+## Quando usarlo
+
+Usa questo pacchetto quando vuoi:
+
+- organizzare le modifiche ai dati in classi `Command`;
+- distinguere le operazioni eseguite in una richiesta da quelle messe in coda;
+- dichiarare i permessi direttamente su controller e azioni;
+- standardizzare redirect Inertia e messaggi flash;
+- generare tipi TypeScript da DTO, Spatie Data ed enum PHP.
+
+Il pacchetto non impone repository, entità parallele o una struttura di directory obbligatoria: le query di lettura possono usare direttamente Eloquent e Query Builder.
 
 ## Requisiti
 
@@ -33,23 +45,19 @@ Il Service Provider viene registrato automaticamente tramite il package auto-dis
 
 ---
 
-## Panoramica delle Funzionalità
+## Funzionalità
 
 `laravel-cqrs` mette a disposizione un set coordinato di strumenti per organizzare il codice applicativo:
 
-### 1. Comandi e Message Bus
-- **`Command`**: Classe base per tutti i comandi. Il valore di ritorno è direttamente ciò che restituisce `handle(): mixed`.
-- **Rilevamento Asincrono**: Metodi `$this->isRunningOnQueue()` ed `$this->emitIfAsync($event)` per evitare l'invio di eventi o notifiche broadcast quando il comando viene eseguito in sincrono.
-- **`ShouldQueue` / `AsyncCommand`**: Comandi pronti per le code di Laravel (`ShouldQueue`), inviati in background o eseguibili in sincrono all'occorrenza.
-- **`MessageBus`**: Bus unificato che instrada automaticamente comandi sincroni e asincroni verso il bus di Laravel (`dispatch`, `dispatchSync`, `dispatchAsync`).
+### 1. Comandi e code
+- **`Command`**: Classe base queueable per le operazioni di scrittura. Il metodo `handle()` contiene l'operazione e può restituire il risultato utile all'applicazione.
+- **`ShouldQueue`**: Interfaccia standard di Laravel per eseguire un comando tramite un worker in background.
+- **Rilevamento asincrono**: `isRunningOnQueue()` ed `emitIfAsync()` aiutano a distinguere l'esecuzione in coda da quella sincrona.
+- **Bus di Laravel**: il package non sostituisce il bus del framework; usa `dispatch()`, `dispatchSync()` e la configurazione delle code di Laravel.
 
-### 2. Controller Base
-- **`Controller`**: Classe base per i tuoi controller HTTP, dotata di metodi helper pensati per flussi CQRS e Inertia:
-  - `execute($command)`: esegue un comando sincrono tramite il bus e ne ritorna il risultato.
-  - `executeAsync($command)`: accoda un comando asincrono in background.
-  - `flashSuccess($message)`: redirect `back()` con messaggio di successo in sessione flash.
-  - `spaRedirect($route)`: redirect SPA compatibile con Inertia (`redirect()->intended(...)`).
-  - `hardRedirect($route)`: redirect a pagina intera o verso URL esterni via `Inertia::location(...)`.
+### 2. Controller base
+- **`Controller`**: classe base per controller HTTP con gli helper `flashSuccess()`, `spaRedirect()` e `hardRedirect()`.
+- L'autorizzazione standard di Laravel è disponibile tramite il trait `AuthorizesRequests`.
 
 ### 3. Autorizzazione Dichiarativa
 - **`#[GateAuthorize]`**: Attributo PHP applicabile a classi controller o a singoli metodi per definire permessi e abilità Gate in modo pulito e dichiarativo.
@@ -69,16 +77,13 @@ Il Service Provider viene registrato automaticamente tramite il package auto-dis
 - DTO/Value Object vanno usati solo dove hanno valore reale: contratti esterni, payload stabili, concetti di dominio non banali.
 - L'idea è mantenere DDD come guida di organizzazione, non come burocrazia applicativa che soffoca Laravel.
 
-### 5. Eventi e architetture modulari
-- La discovery degli eventi è delegata ai meccanismi nativi di Laravel.
-- Le Aree sono una convenzione organizzativa dell'applicazione, senza repository o binding automatici del package.
-
-### 6. Rotte Localizzate
-- **`LocalizedRouteGenerator`**: Generatore di rotte che gestisce automaticamente prefissi di lingua (es. `localized.posts.show`), iniettando il parametro `locale` corrente e pulendo i parametri non dichiarati nella rotta. Supporta anche URL firmati temporanei (`signedRoute`).
+### 6. Eventi e organizzazione del codice
+- Gli eventi e i listener seguono i meccanismi nativi di Laravel.
+- Le `Areas` sono una convenzione organizzativa dell'applicazione, senza discovery, repository o binding automatici del package.
 
 ### 7. Integrazione TypeScript
 - Preconfigurazione automatica per `spatie/laravel-typescript-transformer`.
-- Trasforma DTO, Spatie Data e classi Enum PHP direttamente in tipi TypeScript in `resources/js/types/generated/index.ts`..
+- Trasforma DTO, Spatie Data e classi Enum PHP direttamente in tipi TypeScript in `resources/js/types/generated/index.ts`.
 
 ### 8. Eccezioni Applicative Standard
 - Eccezioni semantiche con status code HTTP associato (`BadRequestException`, `UnauthorizedException`, `ForbiddenException`, `NotFoundException`, `ValidationException`, `CommandException`).
@@ -125,10 +130,10 @@ class ProductController extends Controller
 {
     public function store(Request $request): RedirectResponse
     {
-        $productId = $this->execute(
+        $productId = dispatch_sync(
             new CreateProductCommand(
-                name: $request->string('name'),
-                price: $request->float('price'),
+                name: (string) $request->string('name'),
+                price: (float) $request->float('price'),
             )
         );
 
@@ -143,12 +148,12 @@ class ProductController extends Controller
 
 Per approfondire ciascuna funzionalità e consultare esempi avanzati di utilizzo, consulta le guide dedicate nella cartella `docs/`:
 
-- [Comandi e Message Bus](docs/commands-and-bus.md)
-- [Controller e Routing Localizzato](docs/controllers-and-routing.md)
+- [Comandi, dispatch e code](docs/commands-and-bus.md)
+- [Controller e redirect](docs/controllers-and-routing.md)
 - [Dominio e persistenza](docs/domain-and-persistence.md)
 - [Pragmatic DDD](docs/pragmatic-ddd.md)
 - [Autorizzazione ed Eccezioni](docs/authorization-and-exceptions.md)
-- [Configurazione e discovery](docs/configuration-and-discovery.md)
+- [Configurazione e integrazione](docs/configuration-and-discovery.md)
 - [Integrazione TypeScript](docs/typescript.md)
 
 ---

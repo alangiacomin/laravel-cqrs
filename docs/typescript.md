@@ -1,12 +1,12 @@
 # Integrazione TypeScript
 
-Il pacchetto integra e preconfigura il pacchetto [`spatie/laravel-typescript-transformer`](https://github.com/spatie/laravel-typescript-transformer) per generare automaticamente definizioni di tipi TypeScript a partire da classi PHP, DTO e definizioni Enum.
+Il package integra e preconfigura [`spatie/laravel-typescript-transformer`](https://github.com/spatie/laravel-typescript-transformer) per generare definizioni TypeScript da classi PHP, DTO, Spatie Data ed enum. La generazione è eseguita dal comando Artisan fornito dalla dipendenza.
 
 ---
 
 ## Configurazione Predefinita
 
-Il Service Provider fonde automaticamente una configurazione con le impostazioni standard raccomandate:
+Il service provider aggiunge automaticamente una configurazione con queste impostazioni:
 
 - **Directory scansionata**: Tutto il percorso `app/`.
 - **Destinazione del file generato**: `resources/js/types/generated/index.ts`.
@@ -65,4 +65,16 @@ Esegui il comando Artisan:
 php artisan typescript:transform
 ```
 
-Il file `resources/js/types/generated/index.ts` verrà generato o aggiornato automaticamente, rendendo disponibili tutti i tipi TypeScript per i tuoi componenti Vue, React o Svelte lato frontend.
+Il file `resources/js/types/generated/index.ts` verrà generato o aggiornato. Importalo nei componenti Vue, React o Svelte del frontend come un normale modulo TypeScript.
+
+## Personalizzare la configurazione
+
+Puoi sovrascrivere la configurazione `typescript-transformer` nell'applicazione Laravel quando devi cambiare percorsi, file di output o formattazione, creando `config/typescript-transformer.php`:
+
+```php
+return [
+    'output_file' => resource_path('js/types/generated/frontend.ts'),
+];
+```
+
+La configurazione del package include `app_path()` come directory da scansionare e può essere estesa con le regole previste dalla documentazione di Spatie.

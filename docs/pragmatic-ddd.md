@@ -1,8 +1,8 @@
-# Pragmatic DDD
+# Organizzare un'applicazione Laravel
 
 ## Obiettivo
 
-L'obiettivo del progetto è usare DDD come guida organizzativa, senza trasformare Laravel in un'architettura artigianale e più complessa del necessario.
+L'obiettivo è usare DDD come guida organizzativa, senza trasformare Laravel in un'architettura artigianale e più complessa del necessario. Queste sono linee guida per l'applicazione: il package non richiede la creazione di cartelle o layer specifici.
 
 Il principio è semplice:
 
@@ -36,7 +36,7 @@ app/Areas/Catalog/
 
 ### 2) Comandi e action per la scrittura
 
-La scrittura del sistema deve passare attraverso un comando o una action dedicata. La logica di business appartiene a quella area, non a un repository astratto o a un mapper che duplicata il modello.
+La scrittura del sistema può passare attraverso un comando o una action dedicata. La logica di business appartiene a quella area, non a un repository astratto o a un mapper che duplica il modello.
 
 ```php
 final class UpdateProductCommand extends Command

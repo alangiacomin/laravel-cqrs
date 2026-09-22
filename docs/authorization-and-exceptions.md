@@ -1,6 +1,6 @@
 # Autorizzazione ed Eccezioni
 
-Il pacchetto offre strumenti per la sicurezza dichiarativa tramite attributi PHP e un set di eccezioni applicative standard con status code HTTP associati.
+Il package offre strumenti per dichiarare i permessi vicino alle azioni HTTP e un set di eccezioni applicative standard con status code HTTP associati.
 
 ---
 
@@ -50,7 +50,7 @@ return Application::configure(basePath: dirname(__DIR__))
     // ...
 ```
 
-Quando una richiesta raggiunge il controller, il middleware controlla automaticamente la presenza dell'attributo sulla classe e sul metodo invocato, eseguendo `Gate::authorize(...)`.
+Quando una richiesta raggiunge il controller, il middleware controlla automaticamente gli attributi presenti sulla classe e sul metodo invocato, eseguendo `Gate::authorize(...)`. Senza questo middleware gli attributi restano dichiarazioni passive.
 
 ---
 
